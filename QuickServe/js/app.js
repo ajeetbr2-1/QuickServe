@@ -143,22 +143,40 @@ class QuickServeApp {
 
         // OTP input auto-advance
         document.querySelectorAll('.otp-digit').forEach((input, index, inputs) => {
-            input.addEventListener('input', (e) => {
-                if (e.target.value.length === 1 && index < inputs.length - 1) {
-                    inputs[index + 1].focus();
-                }
-                
-                // Check if all digits are entered
+            // Function to check and enable/disable verify button
+            const updateVerifyButton = () => {
                 const otp = Array.from(inputs).map(i => i.value).join('');
                 const verifyBtn = document.getElementById('verifyOtpBtn');
                 if (verifyBtn) {
                     verifyBtn.disabled = otp.length !== 6;
                 }
+            };
+
+            input.addEventListener('input', (e) => {
+                if (e.target.value.length === 1 && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+                updateVerifyButton();
             });
+
+            // Also listen for change events for better compatibility
+            input.addEventListener('change', updateVerifyButton);
 
             input.addEventListener('keydown', (e) => {
                 if (e.key === 'Backspace' && !e.target.value && index > 0) {
                     inputs[index - 1].focus();
+                }
+            });
+
+            // Listen for paste events to handle pasting full OTP
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const paste = (e.clipboardData || window.clipboardData).getData('text');
+                if (paste && paste.length === 6 && /^\d{6}$/.test(paste)) {
+                    inputs.forEach((inp, idx) => {
+                        inp.value = paste[idx] || '';
+                    });
+                    updateVerifyButton();
                 }
             });
         });
